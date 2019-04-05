@@ -61,27 +61,28 @@ fn same_frame_parser(input: &[u8], frame_type: u8) -> Result<(&[u8], StackMapFra
     value!(input, SameFrame { frame_type })
 }
 
-fn verification_type(v: u8) -> Option<VerificationTypeInfo> {
-    use self::VerificationTypeInfo::*;
-    match v {
-        0 => Some(Top),
-        1 => Some(Integer),
-        2 => Some(Float),
-        3 => Some(Double),
-        4 => Some(Long),
-        5 => Some(Null),
-        6 => Some(UninitializedThis),
-        7 => Some(Object),
-        8 => Some(Uninitialized),
-        _ => None,
-    }
-}
-
 fn verification_type_parser(input: &[u8]) -> Result<(&[u8], VerificationTypeInfo), Err<&[u8]>> {
-    match verification_type(input[0]) {
-        Some(x) => Result::Ok((&input[1..], x)),
-        _ => Result::Err(Err::Error(error_position!(input, ErrorKind::Custom(1)))),
-    }
+    use self::VerificationTypeInfo::*;
+    do_parse!(
+        input,
+        verification_type:
+            switch!(take!(1),
+                    &[0] => value!(Top) |
+                    &[1] => value!(Integer) |
+                    &[2] => value!(Float) |
+                    &[3] => value!(Double) |
+                    &[4] => value!(Long) |
+                    &[5] => value!(Null) |
+                    &[6] => value!(UninitializedThis) |
+                    &[7] => do_parse!(
+                        class_index: be_u16 >> (Object { class_index })
+                    ) |
+                    &[8] => do_parse!(
+                        offset: be_u16 >> (Uninitialized { offset })
+                    )
+            )
+            >> (verification_type)
+    )
 }
 
 fn same_locals_1_stack_item_frame_parser(

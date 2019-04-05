@@ -26,17 +26,16 @@ pub struct CodeAttribute {
 }
 
 #[derive(Clone, Debug)]
-#[repr(u8)]
 pub enum VerificationTypeInfo {
-    Top = 0,
-    Integer = 1,
-    Float = 2,
-    Double = 3,
-    Long = 4,
-    Null = 5,
-    UninitializedThis = 6,
-    Object = 7,
-    Uninitialized = 8,
+    Top,
+    Integer,
+    Float,
+    Double,
+    Long,
+    Null,
+    UninitializedThis,
+    Object { class_index: u16 },
+    Uninitialized { offset: u16 },
 }
 
 #[derive(Clone, Debug)]
